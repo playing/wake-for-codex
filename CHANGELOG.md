@@ -25,3 +25,6 @@ First public release of Wake for Codex.
   runtime and microphone stream format, and rejects a stale Hook path.
 - Unknown configuration fields fail with their full path.
 - Background startup failures are written to the structured event log.
+- Windows ignores already-stopped microphone launch pulses until Codex Voice
+  is observed active, so a failed Voice launch is not reported as a completed
+  session.

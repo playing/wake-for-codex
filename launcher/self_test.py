@@ -75,6 +75,27 @@ class WindowsVoiceLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(events, ["voice_chat_active", "voice_chat_ended"])
 
+    def test_stopped_launch_pulse_does_not_end_session(self) -> None:
+        events: list[str] = []
+        reader = SequenceReader(
+            [
+                MicrophoneUsage("Codex", 2, 2),
+                MicrophoneUsage("Codex", 3, 2),
+                MicrophoneUsage("Codex", 3, 3),
+            ]
+        )
+        wait_for_voice_chat(
+            baseline_start=1,
+            launch_timeout_seconds=2,
+            session_timeout_seconds=2,
+            event_sink=lambda event, **_details: events.append(event),
+            usage_reader=reader,
+            monotonic=Clock(),
+            sleep=lambda _seconds: None,
+            poll_seconds=0,
+        )
+        self.assertEqual(events, ["voice_chat_active", "voice_chat_ended"])
+
     def test_launch_timeout_is_bounded(self) -> None:
         with self.assertRaises(VoiceChatNotObserved):
             wait_for_voice_chat(

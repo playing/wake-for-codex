@@ -193,14 +193,10 @@ def wait_for_voice_chat(
     session_start = 0
     while monotonic() < launch_deadline:
         usage = usage_reader()
-        if usage.started > baseline_start:
+        if usage.started > baseline_start and usage.active:
             session_start = usage.started
-            if usage.active:
-                event_sink("voice_chat_active", microphone_key=usage.key_name)
-                break
-            if usage.stopped >= usage.started:
-                event_sink("voice_chat_ended", microphone_key=usage.key_name)
-                return
+            event_sink("voice_chat_active", microphone_key=usage.key_name)
+            break
         sleep(poll_seconds)
 
     if session_start == 0:
