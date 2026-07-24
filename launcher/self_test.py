@@ -181,7 +181,10 @@ class SettingsTests(unittest.TestCase):
             )
             settings = load_settings(root=root, config_path=config)
         self.assertEqual(settings.hotkey.label, "Ctrl+Alt+K")
-        self.assertEqual(settings.phrase_manifest, root / "phrases.json")
+        self.assertEqual(
+            settings.phrase_manifest,
+            (root / "phrases.json").resolve(),
+        )
 
     def test_unknown_config_version_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
