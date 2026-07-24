@@ -62,5 +62,5 @@ activate_and_wait(event_sink) -> None
 Windows 与 macOS 均已完成本地唤醒、热键交接、Voice Chat 生命周期和恢复监听的
 真人闭环。Python 回归、短语一致性、模型探针、单实例和 `doctor` 检查通过。
 
-本项目是小型 alpha 工具，不把长时间压力、所有声卡组合或所有 Codex 版本列为首发
+本项目是小型 0.x 工具，不把长时间压力、所有声卡组合或所有 Codex 版本列为首发
 门槛。睡眠恢复、设备切换和 Codex 更新后的行为作为已知兼容性边界持续回归。

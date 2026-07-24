@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -197,6 +198,51 @@ class SettingsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_settings(root=root, config_path=config)
 
+    def test_unknown_config_field_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            config = root / "config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "listener": {"threshhold": 0.9},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                ValueError,
+                r"Unknown configuration field: listener\.threshhold",
+            ):
+                load_settings(root=root, config_path=config)
+
+    def test_unknown_fields_are_rejected_in_every_config_section(self) -> None:
+        cases = [
+            ({"mystery": True}, "mystery"),
+            ({"hotkeys": {"linux": "ctrl+g"}}, "hotkeys.linux"),
+            (
+                {"lifecycle": {"launchTimeout": 10}},
+                "lifecycle.launchTimeout",
+            ),
+            ({"paths": {"modelDirectory": "model"}}, "paths.modelDirectory"),
+            ({"macos": {"cooldown": 30}}, "macos.cooldown"),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            config = root / "config.json"
+            for fields, expected in cases:
+                with self.subTest(field=expected):
+                    config.write_text(
+                        json.dumps({"version": 1, **fields}),
+                        encoding="utf-8",
+                    )
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        rf"Unknown configuration field: {expected}",
+                    ):
+                        load_settings(root=root, config_path=config)
+
 
 class EventLogTests(unittest.TestCase):
     def test_log_rotates_before_exceeding_bound(self) -> None:
@@ -207,6 +253,94 @@ class EventLogTests(unittest.TestCase):
             logger.emit("second", value="y" * 30)
             self.assertTrue(path.is_file())
             self.assertTrue(path.with_name("events.jsonl.1").is_file())
+
+
+class LauncherCliTests(unittest.TestCase):
+    def test_startup_failure_is_written_to_the_event_log(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            config = root / "config.json"
+            log_path = root / "events.jsonl"
+            config.write_text('{"version": 999}', encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "launcher.wake_launcher",
+                    "--config",
+                    str(config),
+                    "--log-file",
+                    str(log_path),
+                    "--once",
+                ],
+                cwd=REPO_ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 1)
+            event = json.loads(log_path.read_text(encoding="utf-8"))
+            self.assertEqual(event["event"], "error")
+            self.assertEqual(event["kind"], "startup_failed")
+
+
+class DoctorTests(unittest.TestCase):
+    def test_repository_config_is_used_by_default(self) -> None:
+        from .doctor import resolve_config_path
+
+        with tempfile.TemporaryDirectory() as folder:
+            repo_root = Path(folder)
+            config = repo_root / "config.json"
+            config.write_text('{"version": 1}', encoding="utf-8")
+            self.assertEqual(resolve_config_path(repo_root, None), config.resolve())
+
+    def test_hook_check_rejects_a_stale_launcher_path(self) -> None:
+        from .doctor import inspect_hook
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            hook_path = root / "hooks.json"
+            document = {"hooks": {}}
+            install_launcher_hook(document, root / "old-clone")
+            hook_path.write_text(json.dumps(document), encoding="utf-8")
+
+            check = inspect_hook(hook_path, root / "current-clone")
+
+            self.assertEqual(check["status"], "fail")
+            self.assertEqual(check["detail"]["reason"], "stale_launcher_path")
+
+    def test_microphone_check_rejects_an_unsupported_runtime_format(self) -> None:
+        from .doctor import inspect_microphone
+
+        def reject_format(**_settings: object) -> None:
+            raise ValueError("unsupported 16 kHz format")
+
+        check = inspect_microphone(
+            None,
+            format_checker=reject_format,
+            device_reader=lambda *_args: {"name": "Test microphone"},
+        )
+
+        self.assertEqual(check["status"], "fail")
+        self.assertIn("unsupported 16 kHz format", str(check["detail"]))
+
+    def test_runtime_check_reports_a_broken_kws_import(self) -> None:
+        from .doctor import inspect_runtime
+
+        def import_module(name: str) -> object:
+            if name == "sherpa_onnx":
+                raise ImportError("missing native runtime")
+            return object()
+
+        check = inspect_runtime(importer=import_module)
+
+        self.assertEqual(check["status"], "fail")
+        self.assertIn("missing native runtime", str(check["detail"]))
 
 
 class CodexHookTests(unittest.TestCase):

@@ -34,19 +34,19 @@ Codex 已经负责完整的实时语音对话，本项目只补充缺少的免�
 
 ## 当前状态
 
-目标版本为 `v0.2.0-alpha.1`。
+当前版本为 `v0.2.0`，变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 | 平台 | 状态 | 已验证范围 |
 |---|---|---|
-| Windows 10/11 | alpha | 本地 KWS、热键交接、Codex 麦克风生命周期、恢复监听、单实例、诊断、可选 Hook |
-| macOS | alpha | 本地 KWS、CGEvent 热键交接、CoreAudio 生命周期、恢复监听、诊断、可选 cooldown |
+| Windows 10/11 | v0.2.0 | 本地 KWS、热键交接、Codex 麦克风生命周期、恢复监听、单实例、诊断、可选 Hook |
+| macOS | v0.2.0 | 本地 KWS、CGEvent 热键交接、CoreAudio 生命周期、恢复监听、诊断、可选 cooldown |
 
 旧 TypeWhisper Voice Bridge 不属于本项目。
 
 ## 环境要求
 
 - Codex 桌面端，并在 **Settings → Voice** 中配置 Voice Chat 热键；
-- Python 3.11 或更高版本；
+- Python 3.11 或 3.12（CI 实际覆盖的版本）；
 - Windows 需要 PowerShell 7；
 - 麦克风权限；
 - macOS 需要为启动 Launcher 的进程授予辅助功能权限。
@@ -58,10 +58,9 @@ Wake for Codex 中配置的热键必须与 Codex Voice Chat 热键一致。
 ### Windows
 
 ```powershell
-git clone https://github.com/playing/wake-for-codex.git
+git clone --branch v0.2.0 https://github.com/playing/wake-for-codex.git
 Set-Location .\wake-for-codex
 pwsh -NoProfile -File .\scripts\install-windows.ps1 -DownloadModel
-Copy-Item .\config.example.json .\config.json
 pwsh -NoProfile -File .\run-wake-launcher.ps1 -Check
 pwsh -NoProfile -File .\run-wake-launcher.ps1
 ```
@@ -69,17 +68,31 @@ pwsh -NoProfile -File .\run-wake-launcher.ps1
 ### macOS
 
 ```sh
-git clone https://github.com/playing/wake-for-codex.git
+git clone --branch v0.2.0 https://github.com/playing/wake-for-codex.git
 cd wake-for-codex
 /bin/sh ./scripts/install-macos.sh --download-model
-cp ./config.example.json ./config.json
 /bin/sh ./run-wake-launcher.sh --check
 /bin/sh ./run-wake-launcher.sh
 ```
 
+默认配置无需 `config.json` 即可运行。只有需要修改热键、麦克风、灵敏度、生命周期或
+路径时，才复制 `config.example.json`。
+
 macOS 首次运行前，请在
 **系统设置 → 隐私与安全性 → 麦克风/辅助功能** 中允许启动脚本所使用的终端或
 Launcher 进程。只读 `doctor` 会报告缺失的辅助功能授权，但不会替你修改系统权限。
+
+## 升级
+
+先停止后台 Launcher，获取并切换到目标 Release tag，重新运行对应平台安装器，再次
+启动：
+
+```text
+git fetch --tags
+git checkout v0.2.0
+```
+
+安装器会复用已有模型目录。只有仓库路径变化时，才需要重新安装可选 Hook。
 
 ## 默认唤醒词
 
@@ -143,6 +156,9 @@ sherpa-onnx 使用声学关键词检测，修改后必须重新编译：
 ```sh
 ./.venv-kws/bin/python -m launcher.doctor
 ```
+
+存在 `config.json` 时，`doctor` 会自动使用它，并报告实际配置文件、runtime import、
+精确麦克风流格式、平台生命周期信号和可选 Hook 路径。
 
 只检测一次唤醒词，不发送热键：
 
@@ -244,6 +260,7 @@ sherpa-onnx 上游下载 KWS 模型并校验固定 SHA-256。上游尚未明确�
 ## 开发验证
 
 ```powershell
+.\.venv-kws\Scripts\python.exe -m pip install -r launcher\requirements.txt
 .\.venv-kws\Scripts\python.exe -m compileall -q launcher scripts
 .\.venv-kws\Scripts\python.exe -m launcher.self_test
 .\.venv-kws\Scripts\python.exe -m launcher.sync_phrase_manifest

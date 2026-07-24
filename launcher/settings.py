@@ -57,6 +57,18 @@ def _resolve_path(value: Any, base: Path, default: Path) -> Path:
     return path if path.is_absolute() else (base / path).resolve()
 
 
+def _reject_unknown_fields(
+    values: dict[str, Any],
+    *,
+    section: str | None,
+    allowed: set[str],
+) -> None:
+    unknown = sorted(set(values) - allowed)
+    if unknown:
+        name = f"{section}.{unknown[0]}" if section else unknown[0]
+        raise ValueError(f"Unknown configuration field: {name}")
+
+
 def load_settings(
     *,
     root: Path,
@@ -70,13 +82,55 @@ def load_settings(
         document = json.loads(resolved_config.read_text(encoding="utf-8"))
         if document.get("version") != 1:
             raise ValueError("Unsupported config version")
+        _reject_unknown_fields(
+            document,
+            section=None,
+            allowed={
+                "version",
+                "hotkeys",
+                "listener",
+                "lifecycle",
+                "macos",
+                "paths",
+            },
+        )
         base = resolved_config.parent
 
     listener = dict(document.get("listener") or {})
+    _reject_unknown_fields(
+        listener,
+        section="listener",
+        allowed={"device", "threshold", "score"},
+    )
     lifecycle = dict(document.get("lifecycle") or {})
+    _reject_unknown_fields(
+        lifecycle,
+        section="lifecycle",
+        allowed={
+            "launchTimeoutSeconds",
+            "sessionTimeoutSeconds",
+            "rearmDelaySeconds",
+            "errorRetryDelaySeconds",
+        },
+    )
     paths = dict(document.get("paths") or {})
+    _reject_unknown_fields(
+        paths,
+        section="paths",
+        allowed={"modelDir", "keywordsFile", "phraseManifest"},
+    )
     hotkeys = dict(document.get("hotkeys") or {})
+    _reject_unknown_fields(
+        hotkeys,
+        section="hotkeys",
+        allowed={"windows", "macos"},
+    )
     macos = dict(document.get("macos") or {})
+    _reject_unknown_fields(
+        macos,
+        section="macos",
+        allowed={"lifecycleMode", "cooldownSeconds"},
+    )
     values = dict(overrides or {})
     platform_name = _platform_name()
 
