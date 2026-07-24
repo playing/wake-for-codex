@@ -201,22 +201,26 @@ def main() -> int:
         "session_timeout",
         "threshold",
     }
-    settings = load_settings(
-        root=root,
-        config_path=args.config,
-        overrides={
-            name: getattr(args, name)
-            for name in override_names
-            if getattr(args, name) is not None
-        },
-    )
-    platform = create_platform_adapter(
-        hotkey=settings.hotkey,
-        launch_timeout_seconds=settings.launch_timeout_seconds,
-        session_timeout_seconds=settings.session_timeout_seconds,
-        macos_lifecycle_mode=settings.macos_lifecycle_mode,
-        macos_cooldown_seconds=settings.macos_cooldown_seconds,
-    )
+    try:
+        settings = load_settings(
+            root=root,
+            config_path=args.config,
+            overrides={
+                name: getattr(args, name)
+                for name in override_names
+                if getattr(args, name) is not None
+            },
+        )
+        platform = create_platform_adapter(
+            hotkey=settings.hotkey,
+            launch_timeout_seconds=settings.launch_timeout_seconds,
+            session_timeout_seconds=settings.session_timeout_seconds,
+            macos_lifecycle_mode=settings.macos_lifecycle_mode,
+            macos_cooldown_seconds=settings.macos_cooldown_seconds,
+        )
+    except Exception as error:
+        emit("error", kind="startup_failed", detail=str(error))
+        return 1
     if args.check:
         _listener, platform_details, input_device = initialize_listener(
             settings,

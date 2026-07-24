@@ -16,6 +16,12 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install -r launcher/requirements.txt
+          python -m pip check
+      - name: Import runtime
+        run: python -c "import launcher.wake_launcher"
       - name: Compile Python
         run: python -m compileall -q launcher scripts
       - name: Run state and configuration tests

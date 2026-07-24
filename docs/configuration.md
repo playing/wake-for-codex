@@ -6,6 +6,10 @@ Wake for Codex works without a configuration file. To customize it, copy
 `config.example.json` to the repository root as `config.json`. The local file is
 ignored by Git.
 
+Unknown fields are rejected with their full configuration path instead of being
+silently ignored. `doctor` automatically uses the repository's `config.json`
+when it is present.
+
 ## Precedence
 
 Values are resolved in this order:

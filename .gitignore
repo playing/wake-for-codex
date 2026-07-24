@@ -9,6 +9,11 @@
 __pycache__/
 *.pyc
 
+# Model weights and downloaded archives must never enter source or Releases.
+models/
+*.onnx
+*.tar.bz2
+
 # User-specific local configuration.
 config.json
 .DS_Store

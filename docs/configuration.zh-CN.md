@@ -6,6 +6,9 @@ Wake for Codex 不需要配置文件也能运行。需要自定义时，将
 `config.example.json` 复制到仓库根目录并命名为 `config.json`。该本地文件已被
 Git 忽略。
 
+未知字段会报告完整配置路径并终止，不会被静默忽略。仓库中存在 `config.json` 时，
+`doctor` 会自动使用它。
+
 ## 优先级
 
 配置按以下顺序覆盖：

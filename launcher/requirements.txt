@@ -1,5 +1,5 @@
 click==8.4.2
-numpy==2.5.1
+numpy==2.4.2
 pypinyin==0.55.0
 sentencepiece==0.2.2
 sherpa-onnx==1.13.4

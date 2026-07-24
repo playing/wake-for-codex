@@ -36,19 +36,19 @@ missing hands-free entry point:
 
 ## Status
 
-The target release is `v0.2.0-alpha.1`.
+The current release is `v0.2.0`. See [CHANGELOG.md](CHANGELOG.md).
 
 | Platform | Status | Verified scope |
 |---|---|---|
-| Windows 10/11 | alpha | Local KWS, hotkey handoff, Codex microphone lifecycle, re-arm, singleton, diagnostics, optional Hook |
-| macOS | alpha | Local KWS, CGEvent hotkey handoff, CoreAudio lifecycle, re-arm, diagnostics, optional cooldown |
+| Windows 10/11 | v0.2.0 | Local KWS, hotkey handoff, Codex microphone lifecycle, re-arm, singleton, diagnostics, optional Hook |
+| macOS | v0.2.0 | Local KWS, CGEvent hotkey handoff, CoreAudio lifecycle, re-arm, diagnostics, optional cooldown |
 
 The legacy TypeWhisper Voice Bridge is not part of this project.
 
 ## Requirements
 
 - Codex desktop with a Voice Chat shortcut configured in **Settings → Voice**;
-- Python 3.11 or newer;
+- Python 3.11 or 3.12 (the versions exercised by CI);
 - PowerShell 7 on Windows;
 - Microphone permission;
 - Accessibility permission on macOS for the process that starts the launcher.
@@ -61,10 +61,9 @@ Codex.
 ### Windows
 
 ```powershell
-git clone https://github.com/playing/wake-for-codex.git
+git clone --branch v0.2.0 https://github.com/playing/wake-for-codex.git
 Set-Location .\wake-for-codex
 pwsh -NoProfile -File .\scripts\install-windows.ps1 -DownloadModel
-Copy-Item .\config.example.json .\config.json
 pwsh -NoProfile -File .\run-wake-launcher.ps1 -Check
 pwsh -NoProfile -File .\run-wake-launcher.ps1
 ```
@@ -72,18 +71,33 @@ pwsh -NoProfile -File .\run-wake-launcher.ps1
 ### macOS
 
 ```sh
-git clone https://github.com/playing/wake-for-codex.git
+git clone --branch v0.2.0 https://github.com/playing/wake-for-codex.git
 cd wake-for-codex
 /bin/sh ./scripts/install-macos.sh --download-model
-cp ./config.example.json ./config.json
 /bin/sh ./run-wake-launcher.sh --check
 /bin/sh ./run-wake-launcher.sh
 ```
+
+The defaults work without `config.json`. Copy `config.example.json` only when
+you want to customize the hotkey, microphone, sensitivity, lifecycle, or paths.
 
 Before the first macOS run, allow the terminal or launcher process under
 **System Settings → Privacy & Security → Microphone** and
 **Accessibility**. The read-only doctor reports missing Accessibility
 permission but never changes it.
+
+## Upgrade
+
+Stop the background launcher, fetch the desired release tag, rerun the platform
+installer, and start it again:
+
+```text
+git fetch --tags
+git checkout v0.2.0
+```
+
+The installer reuses an existing verified model directory. Reinstall the
+optional Hook only if the repository path changed.
 
 ## Default wake phrases
 
@@ -150,6 +164,10 @@ Read-only environment check:
 ```sh
 ./.venv-kws/bin/python -m launcher.doctor
 ```
+
+`doctor` automatically uses the repository's `config.json` when present and
+reports the effective file, runtime imports, exact microphone stream format,
+platform lifecycle signal, and optional Hook path.
 
 Detect one wake phrase without sending the hotkey:
 
@@ -258,6 +276,7 @@ unclear; review [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before use.
 ## Development
 
 ```powershell
+.\.venv-kws\Scripts\python.exe -m pip install -r launcher\requirements.txt
 .\.venv-kws\Scripts\python.exe -m compileall -q launcher scripts
 .\.venv-kws\Scripts\python.exe -m launcher.self_test
 .\.venv-kws\Scripts\python.exe -m launcher.sync_phrase_manifest
