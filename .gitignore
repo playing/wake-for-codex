@@ -1,0 +1,14 @@
+# Raw audio must never be added by default.
+*.wav
+*.mp3
+*.m4a
+*.flac
+
+# Disposable local keyword-spotting runtime.
+.venv-kws/
+__pycache__/
+*.pyc
+
+# User-specific local configuration.
+config.json
+.DS_Store

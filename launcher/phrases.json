@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "phrases": [
+    {
+      "label": "HEY_CODEX",
+      "spoken": ["Hey Codex"],
+      "raw": ["HEY CODE X"]
+    },
+    {
+      "label": "你好_CODEX",
+      "spoken": ["你好 Codex"],
+      "raw": ["你好 CODE X"]
+    },
+    {
+      "label": "OK_CODEX",
+      "spoken": ["OK Codex"],
+      "raw": ["OK CODE X"]
+    }
+  ]
+}

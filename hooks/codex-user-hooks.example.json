@@ -1,0 +1,19 @@
+{
+  "description": "Start the singleton Wake for Codex listener.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"<REPO_ROOT>/start-wake-launcher.sh\"",
+            "commandWindows": "pwsh -NoProfile -NonInteractive -File \"<REPO_ROOT>\\start-wake-launcher.ps1\"",
+            "timeout": 5,
+            "statusMessage": "Starting Wake for Codex"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "hotkeys": {
+    "windows": "ctrl+shift+g",
+    "macos": "ctrl+shift+g"
+  },
+  "listener": {
+    "device": null,
+    "threshold": 0.25,
+    "score": 1.0
+  },
+  "lifecycle": {
+    "launchTimeoutSeconds": 15,
+    "sessionTimeoutSeconds": 14400,
+    "rearmDelaySeconds": 1,
+    "errorRetryDelaySeconds": 3
+  },
+  "macos": {
+    "lifecycleMode": "microphone",
+    "cooldownSeconds": 30
+  },
+  "paths": {
+    "modelDir": null,
+    "phraseManifest": "launcher/phrases.json",
+    "keywordsFile": "launcher/keywords.txt"
+  }
+}
